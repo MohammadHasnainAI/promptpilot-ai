@@ -3,191 +3,165 @@
 import { useState } from "react";
 import { improvePrompt } from "./lib/promptEngine";
 
-const examples = [
-  "Write a professional email requesting leave.",
-  "Explain Machine Learning in simple English.",
-  "Create a LinkedIn post about Artificial Intelligence.",
-  "Write a Python program to calculate factorial.",
-];
-
 export default function Home() {
+  const [inputPrompt, setInputPrompt] = useState("");
+  const [outputPrompt, setOutputPrompt] = useState("");
   const [category, setCategory] = useState("General");
-  const [prompt, setPrompt] = useState("");
-  const [result, setResult] = useState("");
-  const [copied, setCopied] = useState(false);
+  const [toast, setToast] = useState("");
 
-  const improve = () => {
-    if (!prompt.trim()) return;
-    setResult(improvePrompt(prompt, category));
+  const handleImprove = () => {
+    if (!inputPrompt.trim()) return;
+    const improved = improvePrompt(inputPrompt, category);
+    setOutputPrompt(improved);
   };
 
-  const copy = async () => {
-    if (!result) return;
+  const handleCopy = async () => {
+    if (!outputPrompt) return;
 
-    await navigator.clipboard.writeText(result);
-    setCopied(true);
+    try {
+      await navigator.clipboard.writeText(outputPrompt);
+      setToast("✅ Prompt copied!");
 
-    setTimeout(() => setCopied(false), 2000);
+      setTimeout(() => {
+        setToast("");
+      }, 2000);
+    } catch (error) {
+      console.error("Failed to copy:", error);
+      alert("Could not copy the prompt.");
+    }
   };
 
-  const download = () => {
-    if (!result) return;
+  const handleDownload = () => {
+    if (!outputPrompt) return;
 
-    const blob = new Blob([result], { type: "text/plain" });
+    const blob = new Blob([outputPrompt], {
+      type: "text/plain;charset=utf-8",
+    });
 
     const url = URL.createObjectURL(blob);
 
-    const a = document.createElement("a");
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "improved-prompt.txt";
 
-    a.href = url;
+    document.body.appendChild(link);
+    link.click();
 
-    a.download = "improved-prompt.txt";
-
-    a.click();
-
+    document.body.removeChild(link);
     URL.revokeObjectURL(url);
+
+    setToast("📄 Prompt downloaded!");
+
+    setTimeout(() => {
+      setToast("");
+    }, 2000);
+  };
+
+  const handleClear = () => {
+    setInputPrompt("");
+    setOutputPrompt("");
+    setToast("");
+    setCategory("General");
   };
 
   return (
-    <main className="min-h-screen bg-slate-950 text-white">
+    <main className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 text-white">
+      {/* ================= NAVBAR ================= */}
+      <nav className="sticky top-0 z-50 border-b border-slate-800 bg-slate-950/80 backdrop-blur">
+        <div className="max-w-7xl mx-auto flex justify-between items-center px-6 py-4">
+          <h1 className="text-2xl font-bold">🚀 PromptPilot AI</h1>
 
-      <section className="max-w-6xl mx-auto px-6 py-16">
-
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-
-          {/* Left */}
-
-          <div>
-
-            <span className="px-4 py-2 rounded-full bg-blue-600/20 text-blue-400 text-sm">
-              🚀 AI Prompt Optimizer
-            </span>
-
-            <h1 className="text-5xl font-bold mt-6 leading-tight">
-              Write Better Prompts.
-              <br />
-              Get Better AI Results.
-            </h1>
-
-            <p className="text-slate-400 mt-6 text-lg">
-              PromptPilot AI improves your prompts instantly using intelligent
-              prompt engineering. No API key required.
-            </p>
-
-            <div className="grid grid-cols-2 gap-3 mt-10">
-
-              {examples.map((item) => (
-                <button
-                  key={item}
-                  onClick={() => setPrompt(item)}
-                  className="rounded-xl border border-slate-700 p-4 text-left hover:border-blue-500 hover:bg-slate-900 transition"
-                >
-                  {item}
-                </button>
-              ))}
-
-            </div>
-
+          <div className="hidden md:flex gap-8 text-gray-300">
+            <a href="#" className="hover:text-white transition">
+              Home
+            </a>
+            <a href="#examples" className="hover:text-white transition">
+              Examples
+            </a>
+            <a href="#features" className="hover:text-white transition">
+              Features
+            </a>
           </div>
+        </div>
+      </nav>
 
-          {/* Right */}
+      <div className="max-w-7xl mx-auto px-6 py-12">
+        {/* ================= HERO ================= */}
+        <section className="text-center">
+          <h1 className="text-5xl md:text-6xl font-extrabold">
+            Improve Your AI Prompts
+          </h1>
+          <p className="mt-6 text-xl text-gray-400 max-w-2xl mx-auto">
+            Transform simple prompts into clear, detailed and professional AI
+            instructions without using any API key.
+          </p>
+        </section>
 
-          <div className="rounded-3xl bg-slate-900 border border-slate-800 p-8 shadow-2xl">
+        {/* ================= EXAMPLES ================= */}
+        <section id="examples" className="mt-14">
+          <h2 className="text-2xl font-bold mb-6">Example Prompts</h2>
 
-            <h2 className="text-2xl font-bold mb-6">
-              Improve Your Prompt
-            </h2>
-
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="w-full mb-4 rounded-xl bg-slate-950 border border-slate-700 p-3"
-            >
-              <option>General</option>
-              <option>Study</option>
-              <option>Coding</option>
-              <option>Business</option>
-              <option>Writing</option>
-              <option>Marketing</option>
-            </select>
-
-            <textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Enter your prompt..."
-              className="w-full h-44 rounded-xl bg-slate-950 border border-slate-700 p-4"
-            />
-
-            <div className="flex justify-between text-sm text-slate-500 mt-2">
-              <span>{prompt.length}/3000</span>
-              <span>{3000 - prompt.length} remaining</span>
-            </div>
-
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-5">
             <button
-              onClick={improve}
-              className="w-full mt-6 bg-blue-600 hover:bg-blue-700 rounded-xl py-4 font-semibold transition"
+              onClick={() =>
+                setInputPrompt(
+                  "Write a professional email asking for one day leave."
+                )
+              }
+              className="bg-slate-900 hover:bg-slate-800 rounded-xl p-5 text-left border border-slate-800 transition"
             >
-              Improve Prompt
+              <div className="text-3xl mb-3">📧</div>
+              <h3 className="font-semibold">Professional Email</h3>
+              <p className="text-sm text-gray-400 mt-2">
+                Create formal emails.
+              </p>
             </button>
 
-            {result && (
-              <div className="mt-8">
+            <button
+              onClick={() =>
+                setInputPrompt(
+                  "Create a LinkedIn post about Artificial Intelligence."
+                )
+              }
+              className="bg-slate-900 hover:bg-slate-800 rounded-xl p-5 text-left border border-slate-800 transition"
+            >
+              <div className="text-3xl mb-3">💼</div>
+              <h3 className="font-semibold">LinkedIn Post</h3>
+              <p className="text-sm text-gray-400 mt-2">
+                Professional social media content.
+              </p>
+            </button>
 
-                <h3 className="font-semibold mb-3">
-                  Improved Prompt
-                </h3>
+            <button
+              onClick={() =>
+                setInputPrompt("Explain Machine Learning in simple English.")
+              }
+              className="bg-slate-900 hover:bg-slate-800 rounded-xl p-5 text-left border border-slate-800 transition"
+            >
+              <div className="text-3xl mb-3">🎓</div>
+              <h3 className="font-semibold">Study Helper</h3>
+              <p className="text-sm text-gray-400 mt-2">
+                Easy learning prompts.
+              </p>
+            </button>
 
-                <div className="rounded-xl bg-slate-950 border border-slate-700 p-5 whitespace-pre-wrap">
-                  {result}
-                </div>
-
-                <div className="flex gap-3 mt-4">
-
-                  <button
-                    onClick={copy}
-                    className="flex-1 rounded-xl bg-green-600 hover:bg-green-700 py-3"
-                  >
-                    {copied ? "Copied ✅" : "Copy"}
-                  </button>
-
-                  <button
-                    onClick={download}
-                    className="flex-1 rounded-xl bg-slate-700 hover:bg-slate-600 py-3"
-                  >
-                    Download
-                  </button>
-
-                </div>
-
-              </div>
-            )}
-
+            <button
+              onClick={() =>
+                setInputPrompt(
+                  "Write a Python program to calculate factorial."
+                )
+              }
+              className="bg-slate-900 hover:bg-slate-800 rounded-xl p-5 text-left border border-slate-800 transition"
+            >
+              <div className="text-3xl mb-3">💻</div>
+              <h3 className="font-semibold">Programming</h3>
+              <p className="text-sm text-gray-400 mt-2">Coding prompts.</p>
+            </button>
           </div>
+        </section>
 
-        </div>
-
-      </section>
-
-      <footer className="border-t border-slate-800 py-8 text-center text-slate-400">
-
-        <p className="font-semibold text-white">
-          PromptPilot AI
-        </p>
-
-        <p className="mt-2">
-          Improve AI prompts instantly without any API key.
-        </p>
-
-        <p className="mt-5">
-          Developed by <span className="text-blue-400 font-semibold">Mohammad Hasnain</span>
-        </p>
-
-        <p className="mt-2 text-sm">
-          Built with Next.js • React • TypeScript • Tailwind CSS
-        </p>
-
-      </footer>
-
+        {/* Next section starts here */}
+      </div>
     </main>
   );
 }
