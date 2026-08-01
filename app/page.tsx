@@ -8,11 +8,13 @@ export default function Home() {
   const [outputPrompt, setOutputPrompt] = useState("");
   const [category, setCategory] = useState("General");
   const [toast, setToast] = useState("");
+  const [copied, setCopied] = useState(false);
 
   const handleImprove = () => {
     if (!inputPrompt.trim()) return;
     const improved = improvePrompt(inputPrompt, category);
     setOutputPrompt(improved);
+    setCopied(false);
   };
 
   const handleCopy = async () => {
@@ -20,9 +22,11 @@ export default function Home() {
 
     try {
       await navigator.clipboard.writeText(outputPrompt);
+      setCopied(true);
       setToast("✅ Prompt copied!");
 
       setTimeout(() => {
+        setCopied(false);
         setToast("");
       }, 2000);
     } catch (error) {
@@ -31,36 +35,11 @@ export default function Home() {
     }
   };
 
-  const handleDownload = () => {
-    if (!outputPrompt) return;
-
-    const blob = new Blob([outputPrompt], {
-      type: "text/plain;charset=utf-8",
-    });
-
-    const url = URL.createObjectURL(blob);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "improved-prompt.txt";
-
-    document.body.appendChild(link);
-    link.click();
-
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-
-    setToast("📄 Prompt downloaded!");
-
-    setTimeout(() => {
-      setToast("");
-    }, 2000);
-  };
-
   const handleClear = () => {
     setInputPrompt("");
     setOutputPrompt("");
     setToast("");
+    setCopied(false);
     setCategory("General");
   };
 
@@ -214,65 +193,179 @@ export default function Home() {
                 <button
                   onClick={handleImprove}
                   disabled={!inputPrompt.trim()}
-                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100 transition rounded-xl py-3 font-semibold"
+                  className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:scale-[1.02] disabled:opacity-40 disabled:hover:scale-100 transition rounded-xl py-3 font-semibold text-white"
                 >
                   🚀 Improve Prompt
                 </button>
 
                 <button
                   onClick={handleClear}
-                  className="px-6 rounded-xl border border-slate-700 hover:bg-slate-800 transition"
+                  className="px-6 rounded-xl border border-slate-700 hover:bg-slate-800 transition text-gray-300"
                 >
                   Clear
                 </button>
               </div>
             </div>
 
-            {/* RIGHT PANEL */}
-            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 flex flex-col">
-              <h2 className="text-2xl font-bold mb-6">✨ AI Output</h2>
-
-              {outputPrompt ? (
-                <div className="flex-1 flex flex-col justify-between">
-                  <div className="w-full h-56 overflow-y-auto rounded-xl bg-slate-950 border border-slate-700 p-4 whitespace-pre-wrap font-mono text-sm text-gray-200">
-                    {outputPrompt}
-                  </div>
-
-                  <div className="flex gap-4 mt-6">
-                    <button
-                      onClick={handleCopy}
-                      className="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition rounded-xl py-3 font-semibold"
-                    >
-                      📋 Copy Prompt
-                    </button>
-                    <button
-                      onClick={handleDownload}
-                      className="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 transition rounded-xl py-3 font-semibold"
-                    >
-                      ⬇️ Download .txt
-                    </button>
-                  </div>
+            {/* ================= RIGHT PANEL ================= */}
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-lg flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between mb-5">
+                  <h2 className="text-2xl font-bold">✨ Improved Prompt</h2>
+                  {outputPrompt && (
+                    <span className="text-green-400 text-sm font-semibold">
+                      ● Ready
+                    </span>
+                  )}
                 </div>
-              ) : (
-                <div className="flex-1 flex items-center justify-center text-center text-gray-500 py-12">
-                  <div>
-                    <div className="text-6xl mb-4">✨</div>
-                    <h3 className="text-2xl font-bold mb-3 text-white">
-                      AI Improved Prompt
-                    </h3>
-                    <p className="max-w-xs">
-                      Click{" "}
-                      <span className="text-blue-400 font-semibold">
-                        Improve Prompt
-                      </span>{" "}
-                      to generate a professional prompt.
-                    </p>
+
+                {outputPrompt ? (
+                  <>
+                    <div className="bg-slate-950 border border-slate-800 rounded-xl p-5 h-80 overflow-y-auto">
+                      <pre className="whitespace-pre-wrap text-gray-200 font-sans leading-7">
+                        {outputPrompt}
+                      </pre>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mt-5">
+                      <button
+                        onClick={handleCopy}
+                        className="bg-green-600 hover:bg-green-700 text-white rounded-xl py-3 transition font-semibold"
+                      >
+                        {copied ? "✅ Copied!" : "📋 Copy Prompt"}
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const blob = new Blob([outputPrompt], {
+                            type: "text/plain",
+                          });
+                          const url = URL.createObjectURL(blob);
+                          const link = document.createElement("a");
+                          link.href = url;
+                          link.download = "improved_prompt.txt";
+                          link.click();
+                          URL.revokeObjectURL(url);
+                        }}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl py-3 transition font-semibold"
+                      >
+                        ⬇️ Download .txt
+                      </button>
+                    </div>
+
+                    <div className="mt-5 text-sm text-gray-400">
+                      Characters:
+                      <span className="text-white ml-2">
+                        {outputPrompt.length}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex h-80 items-center justify-center">
+                    <div className="text-center">
+                      <div className="text-6xl mb-4">🤖</div>
+                      <h3 className="text-2xl font-bold text-white">
+                        No Prompt Yet
+                      </h3>
+                      <p className="mt-3 text-gray-500">
+                        Type a prompt on the left and click
+                        <br />
+                        <span className="text-blue-400 font-semibold">
+                          Improve Prompt
+                        </span>
+                      </p>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
         </section>
+
+        {/* ================= FEATURES ================= */}
+        <section id="features" className="mt-24">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold">Why PromptPilot AI?</h2>
+            <p className="text-gray-400 mt-4 max-w-2xl mx-auto">
+              A simple, fast and privacy-friendly tool to improve prompts for
+              ChatGPT, Claude, Gemini and other AI assistants.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-blue-500 transition">
+              <div className="text-4xl mb-4">⚡</div>
+              <h3 className="text-xl font-semibold mb-2">Instant Results</h3>
+              <p className="text-gray-400 text-sm">
+                Improve prompts instantly with no waiting.
+              </p>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-green-500 transition">
+              <div className="text-4xl mb-4">🔒</div>
+              <h3 className="text-xl font-semibold mb-2">Private</h3>
+              <p className="text-gray-400 text-sm">
+                Your prompts stay inside your browser.
+              </p>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-purple-500 transition">
+              <div className="text-4xl mb-4">💸</div>
+              <h3 className="text-xl font-semibold mb-2">Free</h3>
+              <p className="text-gray-400 text-sm">
+                No API key. No subscription. No hidden cost.
+              </p>
+            </div>
+
+            <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 hover:border-yellow-500 transition">
+              <div className="text-4xl mb-4">🤖</div>
+              <h3 className="text-xl font-semibold mb-2">AI Ready</h3>
+              <p className="text-gray-400 text-sm">
+                Works with ChatGPT, Claude, Gemini and other AI tools.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* ================= STATS ================= */}
+        <section className="mt-24">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="bg-slate-900 rounded-2xl p-6 text-center border border-slate-800">
+              <h3 className="text-4xl font-bold text-blue-400">100%</h3>
+              <p className="text-gray-400 mt-2">Free</p>
+            </div>
+
+            <div className="bg-slate-900 rounded-2xl p-6 text-center border border-slate-800">
+              <h3 className="text-4xl font-bold text-green-400">0</h3>
+              <p className="text-gray-400 mt-2">API Keys Required</p>
+            </div>
+
+            <div className="bg-slate-900 rounded-2xl p-6 text-center border border-slate-800">
+              <h3 className="text-4xl font-bold text-purple-400">3000</h3>
+              <p className="text-gray-400 mt-2">Max Characters</p>
+            </div>
+
+            <div className="bg-slate-900 rounded-2xl p-6 text-center border border-slate-800">
+              <h3 className="text-4xl font-bold text-yellow-400">∞</h3>
+              <p className="text-gray-400 mt-2">Unlimited Usage</p>
+            </div>
+          </div>
+        </section>
+
+        {/* ================= FOOTER ================= */}
+        <footer className="mt-24 border-t border-slate-800 pt-10 pb-8 text-center">
+          <h2 className="text-2xl font-bold">🚀 PromptPilot AI</h2>
+          <p className="text-gray-400 mt-3">
+            Improve prompts faster. Write better instructions. Get better AI
+            answers.
+          </p>
+          <p className="text-sm text-gray-500 mt-8">
+            Built by Mohammad Hasnain
+          </p>
+          <p className="text-sm text-gray-600 mt-2">
+            Next.js • React • TypeScript • Tailwind CSS
+          </p>
+        </footer>
       </div>
     </main>
   );
